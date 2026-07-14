@@ -3,13 +3,37 @@ from __future__ import annotations
 from pathlib import Path
 import json
 import re
+from types import SimpleNamespace
 import unittest
 
 from msys_sdk import responsive_columns
+from msys_apps.common_ui import TouchApplication
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "files" / "app" / "msys_apps"
+
+
+class LegacyTkText:
+    """Debian 11-compatible Text double with no Canvas-style gain arg."""
+
+    def __init__(self) -> None:
+        self.bindings = {}
+        self.marks = []
+        self.drags = []
+
+    def bind(self, sequence, callback, add=None):
+        self.bindings[sequence] = callback
+        return add
+
+    def scan_mark(self, x, y) -> None:
+        self.marks.append((x, y))
+
+    def scan_dragto(self, x, y) -> None:
+        self.drags.append((x, y))
+
+    def yview_scroll(self, _units, _what) -> None:
+        pass
 
 
 class AppsUiContractTests(unittest.TestCase):
@@ -70,8 +94,30 @@ class AppsUiContractTests(unittest.TestCase):
         self.assertIn('wrap="word"', source)
         self.assertIn("self.bind_touch_text_scroll(self.editor)", source)
         common = (PACKAGE / "common_ui.py").read_text(encoding="utf-8")
-        self.assertIn('widget.scan_dragto(0, current, gain=1)', common)
+        self.assertIn("widget.scan_dragto(0, current)", common)
+        self.assertNotIn("scan_dragto(0, current, gain=", common)
         self.assertNotIn("bind_all(", common)
+
+    def test_touch_drag_uses_the_debian11_text_scan_signature(self) -> None:
+        widget = LegacyTkText()
+        app = object.__new__(TouchApplication)
+        app.bind_touch_text_scroll(widget, drag_threshold=8)
+
+        widget.bindings["<ButtonPress-1>"](SimpleNamespace(y=100))
+        self.assertIsNone(
+            widget.bindings["<B1-Motion>"](SimpleNamespace(y=105))
+        )
+        self.assertEqual(widget.drags, [])
+        self.assertEqual(
+            widget.bindings["<B1-Motion>"](SimpleNamespace(y=112)),
+            "break",
+        )
+        self.assertEqual(widget.marks, [(0, 100)])
+        self.assertEqual(widget.drags, [(0, 112)])
+        self.assertEqual(
+            widget.bindings["<ButtonRelease-1>"](SimpleNamespace()),
+            "break",
+        )
 
     def test_calculator_compacts_landscape_and_scrolls_long_expressions(self) -> None:
         source = (PACKAGE / "calculator_app.py").read_text(encoding="utf-8")

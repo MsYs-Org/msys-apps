@@ -399,7 +399,9 @@ class TouchApplication:
                 return None
             dragging = True
             try:
-                widget.scan_dragto(0, current, gain=1)
+                # tkinter.Text.scan_dragto on Debian 11 accepts only x/y;
+                # unlike Canvas it has no public ``gain`` keyword.
+                widget.scan_dragto(0, current)
             except (AttributeError, RuntimeError, tk.TclError):
                 pass
             return "break"

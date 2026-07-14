@@ -1,5 +1,12 @@
 # MSYS Everyday Apps
 
+## 0.1.12 Debian 11 Notes drag compatibility
+
+Notes keeps thresholded direct touch scrolling, but calls the Debian 11
+`tkinter.Text.scan_dragto(x, y)` API without the Canvas-only `gain` keyword.
+This prevents drag-time callback exceptions while preserving taps, selection,
+wheel input, and the existing input-method lifecycle.
+
 ## 0.1.11 Notes input-method lifecycle
 
 Notes addresses only the replaceable `role:input-method`. Focus and real text
