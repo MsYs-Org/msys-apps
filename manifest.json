@@ -1,0 +1,170 @@
+{
+  "schema": "msys.manifest.v1",
+  "package": {
+    "id": "org.msys.apps",
+    "name": "MSYS Everyday Apps",
+    "version": "0.1.8",
+    "kind": "application",
+    "vendor": "MSYS",
+    "summary": "Touch-friendly Notes, Calculator, and Device Info applications",
+    "x-msys-i18n": {
+      "catalog": "files/share/i18n/catalog.json",
+      "name_key": "package.name",
+      "summary_key": "package.summary"
+    },
+    "icons": [
+      {
+        "path": "files/share/icons/apps.ppm",
+        "size": 32,
+        "mime": "image/x-portable-pixmap"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "notes",
+      "name": "Notes",
+      "runtime": "tk",
+      "exec": [
+        "python",
+        "@package/files/app/notes.py"
+      ],
+      "lifecycle": "manual",
+      "restart": "never",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "readiness": {
+        "mode": "mipc-ready",
+        "timeout_ms": 8000
+      },
+      "isolation": "baseline",
+      "windowing": {
+        "system": "x11",
+        "display": "inherit",
+        "mode": "window",
+        "title": "MSYS Notes",
+        "identity": {
+          "app_id": "org.msys.apps.notes",
+          "x11_wm_class": "org.msys.apps.notes",
+          "x11_wm_instance": "notes"
+        }
+      },
+      "activation": {
+        "launchable": true
+      },
+      "x-msys-i18n": {
+        "catalog": "files/share/i18n/catalog.json",
+        "name_key": "notes.name",
+        "summary_key": "notes.summary"
+      },
+      "permissions": [
+        "state:notes:read-write",
+        "mipc.call:role:input-method"
+      ],
+      "icons": [
+        {
+          "path": "files/share/icons/notes.ppm",
+          "size": 32,
+          "mime": "image/x-portable-pixmap"
+        }
+      ]
+    },
+    {
+      "id": "calculator",
+      "name": "Calculator",
+      "runtime": "tk",
+      "exec": [
+        "python",
+        "@package/files/app/calculator.py"
+      ],
+      "lifecycle": "manual",
+      "restart": "never",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "readiness": {
+        "mode": "mipc-ready",
+        "timeout_ms": 8000
+      },
+      "isolation": "baseline",
+      "windowing": {
+        "system": "x11",
+        "display": "inherit",
+        "mode": "window",
+        "title": "MSYS Calculator",
+        "identity": {
+          "app_id": "org.msys.apps.calculator",
+          "x11_wm_class": "org.msys.apps.calculator",
+          "x11_wm_instance": "calculator"
+        }
+      },
+      "activation": {
+        "launchable": true
+      },
+      "x-msys-i18n": {
+        "catalog": "files/share/i18n/catalog.json",
+        "name_key": "calculator.name",
+        "summary_key": "calculator.summary"
+      },
+      "icons": [
+        {
+          "path": "files/share/icons/calculator.ppm",
+          "size": 32,
+          "mime": "image/x-portable-pixmap"
+        }
+      ]
+    },
+    {
+      "id": "device-info",
+      "name": "Device Info",
+      "runtime": "tk",
+      "exec": [
+        "python",
+        "@package/files/app/device_info.py"
+      ],
+      "lifecycle": "manual",
+      "restart": "never",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "readiness": {
+        "mode": "mipc-ready",
+        "timeout_ms": 8000
+      },
+      "isolation": "baseline",
+      "windowing": {
+        "system": "x11",
+        "display": "inherit",
+        "mode": "window",
+        "title": "MSYS Device Info",
+        "identity": {
+          "app_id": "org.msys.apps.device-info",
+          "x11_wm_class": "org.msys.apps.device-info",
+          "x11_wm_instance": "device-info"
+        }
+      },
+      "activation": {
+        "launchable": true
+      },
+      "x-msys-i18n": {
+        "catalog": "files/share/i18n/catalog.json",
+        "name_key": "device.name",
+        "summary_key": "device.summary_short"
+      },
+      "permissions": [
+        "mipc.call:msys.core.list_components",
+        "mipc.call:msys.core.list_roles",
+        "mipc.call:msys.core.isolation_capabilities",
+        "mipc.call:org.msys.hal.manager.v1.inventory"
+      ],
+      "icons": [
+        {
+          "path": "files/share/icons/device-info.ppm",
+          "size": 32,
+          "mime": "image/x-portable-pixmap"
+        }
+      ]
+    }
+  ]
+}

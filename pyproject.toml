@@ -1,0 +1,10 @@
+[project]
+name = "msys-apps"
+version = "0.1.8"
+description = "Zero-dependency everyday applications for MSYS"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["files/app", "../msys-sdk"]
