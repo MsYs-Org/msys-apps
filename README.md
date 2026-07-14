@@ -1,5 +1,15 @@
 # MSYS Everyday Apps
 
+## 0.1.11 Notes input-method lifecycle
+
+Notes addresses only the replaceable `role:input-method`. Focus and real text
+touches request `show`, explicit Save/`Ctrl+S`/`Ctrl+Enter`, focus loss, and
+window close request `hide`. Requests are coalesced off the Tk thread, while a
+new touch can reassert `show` after the provider dismissed itself. The cold
+show deadline includes the provider's bounded on-demand Tk startup. This is a
+thin package-local adapter because the current SDK has no Tk input-method
+binding helper; it is intentionally shaped for later extraction into the SDK.
+
 ## 0.1.10 responsive application surfaces
 
 Release builds vendor the immutable `msys_sdk` source into `files/app/msys_sdk`.

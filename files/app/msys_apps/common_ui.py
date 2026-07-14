@@ -37,6 +37,9 @@ SUCCESS = "#137a4b"
 ICON_DIR = Path(__file__).resolve().parents[2] / "share" / "icons"
 CARD_MINIMUM_WIDTH = 210
 CARD_MAXIMUM_COLUMNS = 2
+INPUT_METHOD_SHOW_TIMEOUT = 6.0
+INPUT_METHOD_HIDE_TIMEOUT = 2.0
+INPUT_METHOD_FOCUS_SETTLE_MS = 80
 
 
 class ResponsiveCardGrid(ttk.Frame):
@@ -139,6 +142,7 @@ class TouchApplication:
         self._input_pending: tuple[bool, str] | None = None
         self._input_desired: tuple[bool, str] | None = None
         self._input_worker_running = False
+        self._input_focus_check: str | None = None
         self._configure_style()
         self._size_window()
         self._window_icon = self._load_icon(icon_name)
@@ -501,6 +505,10 @@ class TouchApplication:
             self.set_status(self.i18n("common.connection_failed"), error=True)
             return None
         self._channel.start(lambda message: self.post("lifecycle", message))
+        # Notes selects its editor before the component handshake.  Reconcile
+        # that already-valid focus once the private channel can actually route
+        # role calls; otherwise the first FocusIn is permanently lost.
+        self.root.after_idle(self._reconcile_input_method_focus)
         return self._channel
 
     @staticmethod
@@ -533,22 +541,18 @@ class TouchApplication:
         self._input_widgets[widget] = selected_mode
 
         def show(_event: object = None) -> None:
+            self._cancel_input_focus_check()
             self._queue_input_method(True, selected_mode)
 
-        def focus_out(_event: object = None) -> None:
-            def check() -> None:
-                if self.closed:
-                    return
-                try:
-                    focused = self.root.focus_get()
-                except tk.TclError:
-                    return
-                # None also describes focus moving into the keyboard's other
-                # toplevel; its own X11 watcher will handle a real app switch.
-                if focused is not None and self._input_registration(focused) is None:
-                    self._queue_input_method(False, selected_mode)
+        def touched(_event: object = None) -> None:
+            self._cancel_input_focus_check()
+            # The provider can dismiss itself after an outside press while the
+            # app still owns focus.  A real new touch therefore reasserts show
+            # even when the last requested state was already visible.
+            self._queue_input_method(True, selected_mode, force=True)
 
-            self.root.after_idle(check)
+        def focus_out(_event: object = None) -> None:
+            self._schedule_input_focus_check()
 
         def destroyed(event: Any) -> None:
             if getattr(event, "widget", None) is not widget:
@@ -558,6 +562,7 @@ class TouchApplication:
 
         widget.bind("<FocusIn>", show, add="+")
         widget.bind("<FocusOut>", focus_out, add="+")
+        widget.bind("<ButtonPress-1>", touched, add="+")
         widget.bind("<Destroy>", destroyed, add="+")
         if not self._input_root_bound:
             self.root.bind("<ButtonPress-1>", self._input_pointer_press, add="+")
@@ -566,19 +571,75 @@ class TouchApplication:
     def _input_pointer_press(self, event: Any) -> None:
         registration = self._input_registration(getattr(event, "widget", None))
         if registration is None:
-            current_mode = self._input_desired[1] if self._input_desired else "en"
-            self._queue_input_method(False, current_mode)
-            return
-        _widget, mode = registration
-        self._queue_input_method(True, mode)
+            self.request_input_method_hide()
 
-    def _queue_input_method(self, visible: bool, mode: str) -> None:
+    def _cancel_input_focus_check(self) -> None:
+        pending = self._input_focus_check
+        self._input_focus_check = None
+        if pending is None:
+            return
+        try:
+            self.root.after_cancel(pending)
+        except (RuntimeError, tk.TclError):
+            pass
+
+    def _schedule_input_focus_check(self) -> None:
+        self._cancel_input_focus_check()
+
+        def check() -> None:
+            self._input_focus_check = None
+            self._reconcile_input_method_focus(hide_if_missing=True)
+
+        try:
+            self._input_focus_check = self.root.after(
+                INPUT_METHOD_FOCUS_SETTLE_MS,
+                check,
+            )
+        except (RuntimeError, tk.TclError):
+            self._input_focus_check = None
+
+    def _reconcile_input_method_focus(self, *, hide_if_missing: bool = False) -> None:
+        if self.closed or self._channel is None:
+            return
+        try:
+            focused = self.root.focus_get()
+        except (RuntimeError, tk.TclError):
+            return
+        registration = self._input_registration(focused)
+        if registration is not None:
+            _widget, mode = registration
+            self._queue_input_method(True, mode)
+        elif hide_if_missing:
+            self.request_input_method_hide()
+
+    def request_input_method_hide(self) -> None:
+        """Hide the selected role without naming its implementation."""
+
+        self._cancel_input_focus_check()
+        current_mode = self._input_desired[1] if self._input_desired else "en"
+        self._queue_input_method(False, current_mode)
+
+    def _queue_input_method(
+        self,
+        visible: bool,
+        mode: str,
+        *,
+        force: bool = False,
+    ) -> None:
         if self.closed or self._channel is None:
             return
         request = (bool(visible), str(mode))
         with self._input_lock:
-            if self._input_desired == request and self._input_pending is None:
-                return
+            if self._input_desired == request:
+                # FocusIn and ButtonPress can describe the same physical tap.
+                # Never duplicate an in-flight request; force is only for a
+                # later touch after the provider may have dismissed itself.
+                if (
+                    not force
+                    or self._input_pending is not None
+                    or self._input_worker_running
+                ):
+                    return
             self._input_desired = request
             self._input_pending = request
             if self._input_worker_running:
@@ -609,7 +670,11 @@ class TouchApplication:
                     "role:input-method",
                     "show" if visible else "hide",
                     {"mode": mode} if visible else {},
-                    timeout=2.0,
+                    timeout=(
+                        INPUT_METHOD_SHOW_TIMEOUT
+                        if visible
+                        else INPUT_METHOD_HIDE_TIMEOUT
+                    ),
                 )
             except MipcError:
                 with self._input_lock:
@@ -648,10 +713,26 @@ class TouchApplication:
     def close(self) -> None:
         if self.closed:
             return
+        self._cancel_input_focus_check()
         self.closed = True
         with self._input_lock:
+            desired = self._input_desired
             self._input_pending = None
-            self._input_desired = None
+            self._input_desired = (False, desired[1] if desired else "en")
+        # A terminal close is an explicit hide request when this app asked the
+        # role to be visible.  The provider also observes lifecycle closure,
+        # but this ordered best-effort call avoids leaving the overlay up until
+        # that later event and remains bounded when Core is already closing.
+        if self._channel is not None and desired is not None and desired[0]:
+            try:
+                self._channel.call(
+                    "role:input-method",
+                    "hide",
+                    {},
+                    timeout=INPUT_METHOD_HIDE_TIMEOUT,
+                )
+            except MipcError:
+                pass
         for unbind in self._wrap_bindings:
             try:
                 unbind()

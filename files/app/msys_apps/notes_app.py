@@ -29,7 +29,7 @@ class NotesApplication(TouchApplication):
             header,
             text=self.i18n("common.save"),
             style="Accent.TButton",
-            command=self.save,
+            command=self.submit,
         ).pack(
             side="right", padx=(5, 0)
         )
@@ -61,7 +61,8 @@ class NotesApplication(TouchApplication):
         self.editor.pack(side="left", fill="both", expand=True)
         self.bind_touch_text_scroll(self.editor)
         self.editor.bind("<<Modified>>", self._modified)
-        self.root.bind("<Control-s>", lambda _event: self.save())
+        self.root.bind("<Control-s>", self._submit_shortcut)
+        self.root.bind("<Control-Return>", self._submit_shortcut)
         self._load()
         self.attach_input_method(
             self.editor,
@@ -106,6 +107,18 @@ class NotesApplication(TouchApplication):
         self._dirty = False
         self.set_status(self.i18n("notes.saved_bytes", {"size": size}))
         return True
+
+    def submit(self) -> bool:
+        """Save an explicit user submission and dismiss the touch IME."""
+
+        saved = self.save()
+        if saved:
+            self.request_input_method_hide()
+        return saved
+
+    def _submit_shortcut(self, _event: object = None) -> str:
+        self.submit()
+        return "break"
 
     def clear(self) -> None:
         if not messagebox.askyesno(

@@ -3,7 +3,7 @@
   "package": {
     "id": "org.msys.apps",
     "name": "MSYS Everyday Apps",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "kind": "application",
     "vendor": "MSYS",
     "summary": "Touch-friendly Notes, Calculator, and Device Info applications",

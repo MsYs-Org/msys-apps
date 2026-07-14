@@ -54,6 +54,7 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(self.manifest["schema"], "msys.manifest.v1")
         package = self.manifest["package"]
         self.assertEqual(package["id"], "org.msys.apps")
+        self.assertEqual(__version__, "0.1.11")
         self.assertEqual(package["version"], __version__)
         project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         self.assertEqual(
@@ -142,7 +143,13 @@ class ManifestTests(unittest.TestCase):
         notes = next(
             item for item in self.manifest["components"] if item["id"] == "notes"
         )
-        self.assertIn("mipc.call:role:input-method", notes["permissions"])
+        self.assertEqual(
+            set(notes["permissions"]),
+            {
+                "state:notes:read-write",
+                "mipc.call:role:input-method",
+            },
+        )
         source = (ROOT / "files/app/msys_apps/notes_app.py").read_text(
             encoding="utf-8"
         )
