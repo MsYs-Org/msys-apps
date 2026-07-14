@@ -1,6 +1,6 @@
 # MSYS Everyday Apps
 
-## 0.1.8 responsive application surfaces
+## 0.1.10 responsive application surfaces
 
 Release builds vendor the immutable `msys_sdk` source into `files/app/msys_sdk`.
 The application remains isolated without relying on a host `PYTHONPATH`, while
