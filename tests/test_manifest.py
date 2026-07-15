@@ -54,7 +54,7 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(self.manifest["schema"], "msys.manifest.v1")
         package = self.manifest["package"]
         self.assertEqual(package["id"], "org.msys.apps")
-        self.assertEqual(__version__, "0.1.12")
+        self.assertEqual(__version__, "0.1.13")
         self.assertEqual(package["version"], __version__)
         project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         self.assertEqual(

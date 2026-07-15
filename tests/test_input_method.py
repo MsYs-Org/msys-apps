@@ -5,7 +5,7 @@ import types
 import unittest
 from unittest import mock
 
-from msys_apps import common_ui
+from msys_sdk import tk_app as sdk_tk_app
 from msys_apps.common_ui import (
     INPUT_METHOD_FOCUS_SETTLE_MS,
     INPUT_METHOD_HIDE_TIMEOUT,
@@ -110,7 +110,7 @@ def application(channel: FakeChannel | None = None) -> TouchApplication:
     return app
 
 
-@mock.patch("msys_apps.common_ui.threading.Thread", InlineThread)
+@mock.patch("msys_sdk.tk_app.threading.Thread", InlineThread)
 class InputMethodBindingTests(unittest.TestCase):
     def test_real_touches_reassert_show_and_non_editor_touch_hides(self) -> None:
         channel = FakeChannel()
@@ -179,7 +179,7 @@ class InputMethodBindingTests(unittest.TestCase):
         app.root.focused = editor
 
         with mock.patch.object(
-            common_ui.ComponentChannel,
+            sdk_tk_app.ComponentChannel,
             "from_environment",
             return_value=channel,
         ):

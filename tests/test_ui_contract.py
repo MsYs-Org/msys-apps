@@ -12,6 +12,7 @@ from msys_apps.common_ui import TouchApplication
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "files" / "app" / "msys_apps"
+SDK_TK_APP = ROOT.parent / "msys-sdk" / "msys_sdk" / "tk_app.py"
 
 
 class LegacyTkText:
@@ -39,13 +40,13 @@ class LegacyTkText:
 class AppsUiContractTests(unittest.TestCase):
     def test_shared_responsive_layout_helpers_are_used_without_a_local_copy(self) -> None:
         self.assertFalse((PACKAGE / "ui_layout.py").exists())
-        common = (PACKAGE / "common_ui.py").read_text(encoding="utf-8")
+        common = SDK_TK_APP.read_text(encoding="utf-8")
         self.assertIn("TkScrollablePage", common)
         self.assertIn("bind_tk_text_wrap", common)
         self.assertIn("responsive_columns", common)
 
     def test_every_window_uses_its_packaged_icon(self) -> None:
-        common = (PACKAGE / "common_ui.py").read_text(encoding="utf-8")
+        common = SDK_TK_APP.read_text(encoding="utf-8")
         self.assertIn("tk.PhotoImage", common)
         self.assertIn("iconphoto", common)
         for name in ("notes", "calculator", "device-info"):
@@ -61,7 +62,7 @@ class AppsUiContractTests(unittest.TestCase):
         self.assertNotIn("json.dumps", source)
 
     def test_portrait_and_landscape_card_layout_have_stable_breakpoints(self) -> None:
-        common = (PACKAGE / "common_ui.py").read_text(encoding="utf-8")
+        common = SDK_TK_APP.read_text(encoding="utf-8")
         minimum = int(
             re.search(r"(?m)^CARD_MINIMUM_WIDTH = (\d+)$", common).group(1)
         )
@@ -93,7 +94,7 @@ class AppsUiContractTests(unittest.TestCase):
         source = (PACKAGE / "notes_app.py").read_text(encoding="utf-8")
         self.assertIn('wrap="word"', source)
         self.assertIn("self.bind_touch_text_scroll(self.editor)", source)
-        common = (PACKAGE / "common_ui.py").read_text(encoding="utf-8")
+        common = SDK_TK_APP.read_text(encoding="utf-8")
         self.assertIn("widget.scan_dragto(0, current)", common)
         self.assertNotIn("scan_dragto(0, current, gain=", common)
         self.assertNotIn("bind_all(", common)
@@ -135,7 +136,7 @@ class AppsUiContractTests(unittest.TestCase):
         self.assertEqual(identity["x11_wm_class"], identity["app_id"])
         self.assertEqual(identity["x11_wm_instance"], "device-info")
 
-        common = (PACKAGE / "common_ui.py").read_text(encoding="utf-8")
+        common = SDK_TK_APP.read_text(encoding="utf-8")
         device_source = (PACKAGE / "device_info_app.py").read_text(encoding="utf-8")
         self.assertIn("configure_tk_window_identity", common)
         self.assertIn("self.root.title(title)", common)

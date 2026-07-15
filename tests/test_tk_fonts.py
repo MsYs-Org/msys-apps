@@ -6,6 +6,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "files/app/msys_apps"
+SDK_TK_APP = ROOT.parent / "msys-sdk/msys_sdk/tk_app.py"
 
 
 class TkFontIntegrationTests(unittest.TestCase):
@@ -14,9 +15,10 @@ class TkFontIntegrationTests(unittest.TestCase):
         source = "\n".join(
             path.read_text(encoding="utf-8") for path in PACKAGE.glob("*.py")
         )
+        sdk_source = SDK_TK_APP.read_text(encoding="utf-8")
         self.assertIn(
-            "from msys_sdk.ui_fonts import configure_tk_fonts, font_spec",
-            source,
+            "from .ui_fonts import configure_tk_fonts, font_spec",
+            sdk_source,
         )
         self.assertGreaterEqual(
             source.count("from msys_sdk.ui_fonts import font_spec"),

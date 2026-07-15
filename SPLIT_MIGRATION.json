@@ -1,0 +1,33 @@
+{
+  "schema": "msys.package-split-migration.v1",
+  "legacy_package": "org.msys.apps",
+  "replacements": [
+    {
+      "legacy_component": "org.msys.apps:notes",
+      "component": "org.msys.notes:notes",
+      "repository": "msys-notes",
+      "x11_app_id": "org.msys.apps.notes",
+      "state": "copy-on-first-launch"
+    },
+    {
+      "legacy_component": "org.msys.apps:calculator",
+      "component": "org.msys.calculator:calculator",
+      "repository": "msys-calculator",
+      "x11_app_id": "org.msys.apps.calculator",
+      "state": "stateless"
+    },
+    {
+      "legacy_component": "org.msys.apps:device-info",
+      "component": "org.msys.device-info:device-info",
+      "repository": "msys-device-info",
+      "x11_app_id": "org.msys.apps.device-info",
+      "state": "stateless"
+    }
+  ],
+  "order": [
+    "install replacement packages",
+    "launch org.msys.notes:notes once to copy legacy state",
+    "verify all replacement components",
+    "uninstall org.msys.apps"
+  ]
+}

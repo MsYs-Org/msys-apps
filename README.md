@@ -1,4 +1,15 @@
-# MSYS Everyday Apps
+# MSYS Everyday Apps (compatibility bundle)
+
+> Deprecated for new releases. Notes, Calculator and Device Info now live as
+> peer, independently versioned repositories: `msys-notes`,
+> `msys-calculator`, and `msys-device-info`. This repository remains buildable
+> only for rollback and migration from installed `org.msys.apps` versions.
+> See `SPLIT_MIGRATION.json` for the stable identity map.
+
+## 0.1.13 peer-package migration
+
+The compatibility bundle now consumes the shared SDK component-channel and Tk
+application contracts. New installations use the three peer packages instead.
 
 ## 0.1.12 Debian 11 Notes drag compatibility
 
